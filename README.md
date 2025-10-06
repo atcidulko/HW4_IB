@@ -41,10 +41,11 @@ bio_utils/
 │
 ├── utils/
 │ ├── dna_rna_tools.py # Essential DNA/RNA utilities
-│ ├── fastq_tools.py # GC%, quality, and filtering helpers
+│└─ fastq_tools.py # GC%, quality, and filtering helpers
 │
 ├── main.py # Entry point script
-└── README.md # This very manifesto
+├ ─README.md # This very manifesto
+└── gitig no# undeletable MacOS system file 
 
 ```
 -----
@@ -95,5 +96,5 @@ print("Kept reads:", list(filtered.keys()))
 Filtered sequences:
 seq3: seq=ATGCGT, qual=IIIIII
 
-##**Thank you for reading**
+## **Thank you for reading**
 
