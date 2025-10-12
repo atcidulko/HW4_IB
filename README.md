@@ -47,6 +47,7 @@ bio_utils/
 ├── bio_files_processor.py    # File parsers and format converters
 ├── main.py                   # Entry point script
 ├── README.md                 # This very manifesto
+├─example.fastq	      #Test data
 └── .gitignore                # Undeletable MacOS system file
 
 -----
