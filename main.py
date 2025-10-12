@@ -1,4 +1,3 @@
-
 import os
 from collections import Counter
 
@@ -32,21 +31,18 @@ def main():
     - Checks that the FASTQ file exists.
     - Counts the BH statuses.
     - Prints the results to the console.
-    """
-    fastq_path = "data/sample.fastq"  # <- change this to your file
+    """  
+    fastq_path = "example.fastq"  
 
     if not os.path.exists(fastq_path):
         print(f"File {fastq_path} not found!")
         return
-
+    
     status_counts = analyze_statuses(fastq_path)
-
+        
     print("BH statuses in the FASTQ file:")
     for status, count in status_counts.items():
         print(f"{status}: {count}")
-
-    # Add other main.py functionality here if needed
-    # For example, sequence processing, filtering, etc.
 
 if __name__ == "__main__":
     main()
