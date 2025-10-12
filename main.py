@@ -1,26 +1,53 @@
-# main.py
-from utils.fastq_utils import read_fastq, write_fastq, filter_fastq
 
-# Parameters
-input_fastq = "example_data/test.fastq"
-output_fastq = "filtered_test.fastq"
+import os
+from collections import Counter
 
-# Filtering criteria
-length_bounds = (5, 1000)       # min and max length
-gc_bounds = (40, 60)            # min and max GC content percentage
-quality_threshold = 30           # minimum average Phred33 quality
+def analyze_statuses(fastq_file: str) -> Counter:
+    """
+    Analyze the BH status of reads in a FASTQ file.
 
-# 1. Read FASTQ
-seqs = read_fastq(input_fastq)
+    Each read header is expected to contain a status at the end,
+    e.g., BH:ok, BH:failed, BH:changed.
 
-# 2. Filter sequences
-filtered = filter_fastq(
-    seqs,
-    gc_bounds=gc_bounds,
-    length_bounds=length_bounds,
-    quality_threshold=quality_threshold
-)
+    Args:
+        fastq_file (str): Path to the FASTQ file.
 
-# 3. Write filtered FASTQ
-write_fastq(filtered, output_fastq)
+    Returns:
+        Counter: A dictionary-like object with counts of each status.
+    """
+    counter = Counter()
+    with open(fastq_file, "r") as f:
+        for i, line in enumerate(f):
+            if i % 4 == 0:  # header line in FASTQ
+                parts = line.strip().split()
+                if len(parts) > 1:
+                    status = parts[-1]
+                    counter[status] += 1
+    return counter
+
+def main():
+    """
+    Main function for running the FASTQ BH status analysis.
+
+    - Checks that the FASTQ file exists.
+    - Counts the BH statuses.
+    - Prints the results to the console.
+    """
+    fastq_path = "data/sample.fastq"  # <- change this to your file
+
+    if not os.path.exists(fastq_path):
+        print(f"File {fastq_path} not found!")
+        return
+
+    status_counts = analyze_statuses(fastq_path)
+
+    print("BH statuses in the FASTQ file:")
+    for status, count in status_counts.items():
+        print(f"{status}: {count}")
+
+    # Add other main.py functionality here if needed
+    # For example, sequence processing, filtering, etc.
+
+if __name__ == "__main__":
+    main()
 
