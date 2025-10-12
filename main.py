@@ -1,20 +1,26 @@
-from utils.fastq_tools import filter_fastq
+# main.py
+from utils.fastq_utils import read_fastq, write_fastq, filter_fastq
 
-if __name__ == "__main__":
-    seqs_example = {
-        "seq1": ("ATGC", "IIII"),       # len 4, GC=50%, avg_q=40
-        "seq2": ("GGCC", "####"),       # len 4, GC=100%, avg_q=2
-        "seq3": ("ATGCGT", "IIIIII"),   # len 6, GC=50%, avg_q=40
-        "seq4": ("ATATAT", "IIIIII")    # len 6, GC=0%, avg_q=40
-    }
+# Parameters
+input_fastq = "example_data/test.fastq"
+output_fastq = "filtered_test.fastq"
 
-    filtered = filter_fastq(
-        seqs_example,
-        length_bounds=(5, 10),
-        gc_bounds=(40, 60),
-        quality_threshold=30
-    )
+# Filtering criteria
+length_bounds = (5, 1000)       # min and max length
+gc_bounds = (40, 60)            # min and max GC content percentage
+quality_threshold = 30           # minimum average Phred33 quality
 
-    print("Filtered sequences:")
-    for name, (seq, qual) in filtered.items():
-        print(f"{name}: seq={seq}, qual={qual}")
+# 1. Read FASTQ
+seqs = read_fastq(input_fastq)
+
+# 2. Filter sequences
+filtered = filter_fastq(
+    seqs,
+    gc_bounds=gc_bounds,
+    length_bounds=length_bounds,
+    quality_threshold=quality_threshold
+)
+
+# 3. Write filtered FASTQ
+write_fastq(filtered, output_fastq)
+
