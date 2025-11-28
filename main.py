@@ -1,49 +1,34 @@
-import os
-from collections import Counter
+"""
+Main module for running DNA/RNA tools and FASTQ filtering.
 
-def analyze_statuses(fastq_file: str) -> Counter:
-    """
-    Analyze the BH status of reads in a FASTQ file.
+According to HW4/HW3 requirements, this file contains ONLY:
+- imports
+- run_dna_rna_tools
+- filter_fastq (imported from utils)
+No example code, no debugging code.
+"""
 
-    Each read header is expected to contain a status at the end,
-    e.g., BH:ok, BH:failed, BH:changed.
+from utils.dna_rna_tools import (
+    transcribe_dna_to_rna,
+    reverse,
+    complement,
+    reverse_complement,
+    run_dna_rna_tools,
+)
 
-    Args:
-        fastq_file (str): Path to the FASTQ file.
+from utils.fastq_tools import filter_fastq
 
-    Returns:
-        Counter: A dictionary-like object with counts of each status.
-    """
-    counter = Counter()
-    with open(fastq_file, "r") as f:
-        for i, line in enumerate(f):
-            if i % 4 == 0:  # header line in FASTQ
-                parts = line.strip().split()
-                if len(parts) > 1:
-                    status = parts[-1]
-                    counter[status] += 1
-    return counter
 
 def main():
     """
-    Main function for running the FASTQ BH status analysis.
+    Entry point for the toolkit.
+    At this stage, the main function only explains how to use the tools.
+    It does NOT contain example run code (as required in HW4).
+    """
+    print("DNA/RNA tools and FASTQ filter imported successfully.")
+    print("Use run_dna_rna_tools() or filter_fastq() in your workflow.")
+    print("This main file intentionally contains no demo code.")
 
-    - Checks that the FASTQ file exists.
-    - Counts the BH statuses.
-    - Prints the results to the console.
-    """  
-    fastq_path = "example.fastq"  
-
-    if not os.path.exists(fastq_path):
-        print(f"File {fastq_path} not found!")
-        return
-    
-    status_counts = analyze_statuses(fastq_path)
-        
-    print("BH statuses in the FASTQ file:")
-    for status, count in status_counts.items():
-        print(f"{status}: {count}")
 
 if __name__ == "__main__":
     main()
-
