@@ -6,7 +6,7 @@ from Bio.SeqUtils import gc_fraction
 
 
 # ============================================================
-# Абстрактный базовый класс
+# Base class 
 # ============================================================
 
 class BiologicalSequence(ABC):
@@ -36,7 +36,7 @@ class BiologicalSequence(ABC):
 
 
 # ============================================================
-# ДНК/РНК
+# Nucleic acids
 # ============================================================
 
 class NucleicAcidSequence(BiologicalSequence):
@@ -75,7 +75,7 @@ class RNASequence(NucleicAcidSequence):
 
 
 # ============================================================
-# Аминокислотные послед.
+# Aminoacid sequence
 # ============================================================
 
 class AminoAcidSequence(BiologicalSequence):
@@ -96,7 +96,7 @@ class AminoAcidSequence(BiologicalSequence):
 
 
 # ============================================================
-# FastQ фильтрация через Biopython
+# FastQ filtration via Biopython
 # ============================================================
 
 def filter_fastq(
@@ -137,7 +137,7 @@ def filter_fastq(
 
 
 # ============================================================
-# Функции из bio_files_processor (оставляем, они не удаляются)
+# Functions from bio_files_processor (they can stay)
 # ============================================================
 
 def convert_multiline_fasta_to_oneline(input_fasta: str, output_fasta: str = None) -> None:
