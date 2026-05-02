@@ -1,3 +1,16 @@
+"""
+BIO_UTILS: A lightweight educational bioinformatics toolkit.
+
+Provides biological sequence classes, FASTQ filtering, and file utilities.
+Can be run from the command line to filter FASTQ files.
+
+Usage:
+    python main.py --input example.fastq --output filtered.fastq \\
+        --gc-min 40 --gc-max 60 --len-min 50 --len-max 300 --quality 20
+"""
+
+import argparse
+import logging
 from abc import ABC, abstractmethod
 from typing import Union, Tuple
 
@@ -6,7 +19,49 @@ from Bio.SeqUtils import gc_fraction
 
 
 # ============================================================
-# Base class 
+# Logging setup
+# ============================================================
+
+def setup_logger(log_file: str = "bio_utils.log") -> logging.Logger:
+    """Configure and return a logger that writes to a file and stdout.
+
+    Args:
+        log_file: path to the log file.
+
+    Returns:
+        Configured Logger instance.
+    """
+    logger = logging.getLogger("bio_utils")
+    logger.setLevel(logging.DEBUG)
+
+    # Remove existing handlers so we can switch to a new log file
+    logger.handlers.clear()
+
+    if True:
+        formatter = logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.INFO)
+        stream_handler.setFormatter(formatter)
+
+        logger.addHandler(file_handler)
+        logger.addHandler(stream_handler)
+
+    return logger
+
+
+logger = setup_logger()
+
+
+# ============================================================
+# Base class
 # ============================================================
 
 class BiologicalSequence(ABC):
@@ -75,7 +130,7 @@ class RNASequence(NucleicAcidSequence):
 
 
 # ============================================================
-# Aminoacid sequence
+# Amino acid sequence
 # ============================================================
 
 class AminoAcidSequence(BiologicalSequence):
@@ -105,39 +160,66 @@ def filter_fastq(
     gc_bounds: Union[float, Tuple[float, float]] = (0, 100),
     length_bounds: Union[int, Tuple[int, int]] = (0, 2**32),
     quality_threshold: float = 0,
+    log_file: str = "bio_utils.log",
 ) -> None:
-    """
-    Filter FastQ file by GC-content, length, and average Phred quality.
+    """Filter a FastQ file by GC-content, length, and average Phred quality.
 
     Args:
-        input_path: path to input .fastq file
-        output_path: path to output .fastq file
-        gc_bounds: GC-content range in % 
-        length_bounds: read length range
-        quality_threshold: minimum average Phred quality score
+        input_path: path to input .fastq file.
+        output_path: path to output .fastq file with passing reads.
+        gc_bounds: GC-content range in %. A single number means upper bound only.
+        length_bounds: read length range. A single number means upper bound only.
+        quality_threshold: minimum average Phred quality score.
+        log_file: path to the log file.
     """
+    global logger
+    logger = setup_logger(log_file)
     if isinstance(gc_bounds, (int, float)):
         gc_bounds = (0, float(gc_bounds))
     if isinstance(length_bounds, (int, float)):
         length_bounds = (0, int(length_bounds))
 
+    logger.info(
+        "Starting FASTQ filtering: input=%s, output=%s, "
+        "gc_bounds=%s, length_bounds=%s, quality_threshold=%s",
+        input_path, output_path, gc_bounds, length_bounds, quality_threshold,
+    )
+
     passed = []
+    total = 0
 
-    for record in SeqIO.parse(input_path, "fastq"):
-        gc = gc_fraction(record.seq) * 100
-        length = len(record)
-        avg_quality = sum(record.letter_annotations["phred_quality"]) / length
+    try:
+        for record in SeqIO.parse(input_path, "fastq"):
+            total += 1
+            gc = gc_fraction(record.seq) * 100
+            length = len(record)
+            avg_quality = sum(record.letter_annotations["phred_quality"]) / length
 
-        if (gc_bounds[0] <= gc <= gc_bounds[1]
+            if (
+                gc_bounds[0] <= gc <= gc_bounds[1]
                 and length_bounds[0] <= length <= length_bounds[1]
-                and avg_quality >= quality_threshold):
-            passed.append(record)
+                and avg_quality >= quality_threshold
+            ):
+                passed.append(record)
 
-    SeqIO.write(passed, output_path, "fastq")
+        SeqIO.write(passed, output_path, "fastq")
+
+    except FileNotFoundError:
+        logger.error("Input file not found: %s", input_path)
+        raise
+
+    except Exception as e:
+        logger.error("Unexpected error during filtering: %s", e)
+        raise
+
+    logger.info(
+        "Filtering complete: %d / %d reads passed. Written to %s",
+        len(passed), total, output_path,
+    )
 
 
 # ============================================================
-# Functions from bio_files_processor (they can stay)
+# Functions from bio_files_processor
 # ============================================================
 
 def convert_multiline_fasta_to_oneline(input_fasta: str, output_fasta: str = None) -> None:
@@ -185,3 +267,87 @@ def parse_blast_output(input_file: str, output_file: str) -> None:
     with open(output_file, "w") as out:
         for r in sorted(results):
             out.write(f"{r}\n")
+
+
+# ============================================================
+# CLI
+# ============================================================
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for FASTQ filtering.
+
+    Returns:
+        Namespace with parsed arguments.
+    """
+    parser = argparse.ArgumentParser(
+        prog="bio_utils",
+        description="Filter a FASTQ file by GC content, read length, and quality.",
+    )
+
+    parser.add_argument(
+        "--input", "-i",
+        required=True,
+        help="Path to the input FASTQ file.",
+    )
+    parser.add_argument(
+        "--output", "-o",
+        required=True,
+        help="Path to the output FASTQ file with passing reads.",
+    )
+    parser.add_argument(
+        "--gc-min",
+        type=float,
+        default=0.0,
+        help="Minimum GC content in %% (default: 0).",
+    )
+    parser.add_argument(
+        "--gc-max",
+        type=float,
+        default=100.0,
+        help="Maximum GC content in %% (default: 100).",
+    )
+    parser.add_argument(
+        "--len-min",
+        type=int,
+        default=0,
+        help="Minimum read length (default: 0).",
+    )
+    parser.add_argument(
+        "--len-max",
+        type=int,
+        default=2**32,
+        help="Maximum read length (default: no limit).",
+    )
+    parser.add_argument(
+        "--quality",
+        type=float,
+        default=0.0,
+        help="Minimum average Phred quality score (default: 0).",
+    )
+    parser.add_argument(
+        "--log-file",
+        default="bio_utils.log",
+        help="Path to the log file (default: bio_utils.log).",
+    )
+
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    # Re-setup logger with the user-specified log file
+    global logger
+    logger = setup_logger(args.log_file)
+
+    filter_fastq(
+        input_path=args.input,
+        output_path=args.output,
+        gc_bounds=(args.gc_min, args.gc_max),
+        length_bounds=(args.len_min, args.len_max),
+        quality_threshold=args.quality,
+    )
+
+
+if __name__ == "__main__":
+    main()
