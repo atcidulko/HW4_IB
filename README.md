@@ -1,107 +1,102 @@
-# BIO_UTILS: A lightweight educational bioinformatics toolkit written for Python course of **Institute of Bioinformatics**.  
+# BIO_UTILS: A lightweight educational bioinformatics toolkit written for Python course of **Institute of Bioinformatics**.
+
 It provides three main utilities:
 
-1. **DNA/RNA sequence processing** (`run_dna_rna_tools`)  
-2. **FASTQ record filtering** (`filter_fastq`)  
-3. **File parsing utilities** (`bio_files_processor`)
+1. **Biological sequence processing** (classes `DNASequence`, `RNASequence`, `AminoAcidSequence`)
+2. **FASTQ record filtering** (`filter_fastq`)
+3. **File parsing utilities** (`convert_multiline_fasta_to_oneline`, `parse_blast_output`)
 
-This project was created exclusively for educational purposes and may not be copied or used for any commercial purpose.  
-Its primary purpose is to illustrate to esteemed teachers and their assistants the concept of  
+This project was created exclusively for educational purposes and may not be copied or used for any commercial purpose.
+Its primary purpose is to illustrate to esteemed teachers and their assistants the concept of
 "one closed ear" — information provided to me does not leave my mind because it has no way out.
 
 ---
 ## Author
-Aglaia Tcidulko  
-Tg: @vesfir  
+Aglaia Tcidulko
+Tg: @vesfir
 GitHub: https://github.com/atcidulko
 
---- 
+---
 ## Overview
 
-This project provides simple tools for working with DNA and RNA sequences, filtering FASTQ reads, and parsing biological files (FASTA, FASTQ, CSV).  
-It includes functions for sequence manipulation (reverse, complement, transcription), GC content calculation, quality-based read filtering, and lightweight file handling.
+This project has been refactored from a set of standalone functions into a proper object-oriented toolkit.
+It now uses classes to represent biological sequences, with shared logic defined in abstract base classes.
+FASTQ filtering has been reimplemented using **Biopython**.
 
-All code has been improved based on feedback from the previous homework:  
-	- clearer variable names  
-	- proper use of docstrings instead of inline comments  
-	- simplified and more readable logic  
-	- adherence to PEP8 style guidelines  
+All code has been improved based on feedback from previous homeworks:
+- clearer variable names
+- proper use of docstrings instead of inline comments
+- simplified and more readable logic
+- adherence to PEP8 style guidelines
+- full OOP refactoring: abstraction, inheritance, polymorphism
 
 ### Features
-- Reverse, complement, and transcription for DNA & RNA  
-- GC content calculation (%)  
-- Phred+33 quality decoding and mean score computation  
-- Read filtering by GC%, length, and mean quality thresholds  
-- FASTA and FASTQ parsing helpers  
-- CSV writing and summarization tools  
+- Abstract base class `BiologicalSequence` defining a shared interface
+- `DNASequence`: reverse, complement, reverse_complement, transcribe → RNASequence
+- `RNASequence`: reverse, complement, reverse_complement
+- `AminoAcidSequence`: alphabet validation, molecular weight estimation
+- FASTQ filtering by GC%, length, and mean Phred quality — powered by Biopython
+- FASTA format converter and BLAST output parser
 
 ---
 ## Project Structure: A Treasure Map
-
-bio_utils/
+```
+hw4_ib/
 │
-├── utils/
-│   ├── dna_rna_tools.py      # Essential DNA/RNA utilities
-│   └── fastq_tools.py        # GC%, quality, and filtering helpers
-│
-├── bio_files_processor.py    # File parsers and format converters
-├── main.py                   # Entry point script
-├── README.md                 # This very manifesto
-├─example.fastq	      #Test data
-└── .gitignore                # Undeletable MacOS system file
+├── main.py                # All classes, filter_fastq, and file utilities
+├── requirements.txt       # biopython
+├── README.md              # This very manifesto
+├── example.fastq          # Test data
+└── .gitignore             # Undeletable MacOS system file
+```
 
------
+---
 ## Installation
-git clone https://github.com/atcidulko/bio_utils.git  
-cd bio_utils  
-python3 main.py  
-
-To fork the repository, replace <atcidulko> with your GitHub username.
+```bash
+git clone https://github.com/atcidulko/HW4_IB.git
+cd HW4_IB
+pip install -r requirements.txt
+```
 
 ---
 ## Usage examples
 
-### DNA/RNA tools
-from utils.dna_rna_tools import run_dna_rna_tools
+### Biological sequences
+```python
+from main import DNASequence, RNASequence, AminoAcidSequence
 
-print(run_dna_rna_tools("ATGC", "reverse"))
-print(run_dna_rna_tools("ATGC", proc="transcribe"))
-print(run_dna_rna_tools("AUGC", proc="complement"))
+dna = DNASequence("ATGC")
+print(dna.complement())        # DNASequence(TACG)
+print(dna.reverse())           # DNASequence(CGTA)
+print(dna.transcribe())        # RNASequence(AUGC)
+
+rna = RNASequence("AUGC")
+print(rna.reverse_complement()) # RNASequence(GCAU)
+
+protein = AminoAcidSequence("ACDEF")
+print(protein.molecular_weight())  # approximate weight in Da
+```
 
 ### FASTQ filtering
-from utils.fastq_tools import filter_fastq
+```python
+from main import filter_fastq
 
-seqs_example = {
-    "seq1": ("ATGC", "IIII"),
-    "seq2": ("GGCC", "####"),
-    "seq3": ("ATGCGT", "IIIIII"),
-    "seq4": ("ATATAT", "IIIIII")
-}
-
-filtered = filter_fastq(
-    seqs_example,
+filter_fastq(
+    input_path="example.fastq",
+    output_path="filtered.fastq",
     gc_bounds=(40, 60),
-    length_bounds=(5, 10),
-    quality_threshold=30
+    length_bounds=(50, 300),
+    quality_threshold=20
 )
+```
 
-print("Kept reads:", list(filtered.keys()))
+### File utilities
+```python
+from main import convert_multiline_fasta_to_oneline, parse_blast_output
 
-### File processing
-from bio_files_processor import parse_fasta, parse_fastq
-
-fasta_records = parse_fasta("example_fasta.fasta")
-fastq_records = parse_fastq("example_fastq.fastq")
-
-print("FASTA records:", len(fasta_records))
-print("FASTQ records:", len(fastq_records))
-
----
-## Example output
-
-Filtered sequences:  
-seq3: seq=ATGCGT, qual=IIIIII  
+convert_multiline_fasta_to_oneline("input.fasta", "output.fasta")
+parse_blast_output("blast_results.txt", "best_hits.txt")
+```
 
 ---
 ## **Thank you for reading**
-
